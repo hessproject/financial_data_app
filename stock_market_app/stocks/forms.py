@@ -1,11 +1,11 @@
 from django import forms
-from django.contrib.auth.models import User
+from stocks.models import Category
 
-class UserForm(forms.ModelForm):
-    first_name = forms.CharField(max_length=32)
-    last_name = forms.CharField(max_length=32)
-    password = forms.CharField(widget=forms.PasswordInput)
+class CategoryForm(forms.ModelForm):
+    name = forms.CharField(max_length=128,
+                           help_text='Please enter category name')
+    url = forms.URLField(help_text='Enter the API Endpoint')
 
     class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'email', 'password')
+        model = Category
+        fields = ('name','url')

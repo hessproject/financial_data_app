@@ -38,9 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'registration',
     'requests',
-    'stocks'
+    'stocks',
+    'registration',
 ]
 
 MIDDLEWARE = [
@@ -89,6 +89,7 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
+
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
@@ -103,6 +104,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Other Authentication settings
+
+REGISTRATION_OPEN = True
+
+ACCOUNT_ACTIVATE_DAYS = 7
+
+LOGIN_REDIRECT_URL = '/main/'
+
+LOGIN_URL = '/accounts/login/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
