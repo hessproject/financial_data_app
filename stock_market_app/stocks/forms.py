@@ -1,11 +1,18 @@
 from django import forms
-from stocks.models import Category
 
-class CategoryForm(forms.ModelForm):
-    name = forms.CharField(max_length=128,
-                           help_text='Please enter category name')
-    url = forms.URLField(help_text='Enter the API Endpoint')
+class HistoricalPricingForm(forms.Form):
+    stock_symbol = forms.CharField(required=True, max_length=5,
+                           help_text='Stock Symbol')
+    start_date = forms.DateField(required=True, input_formats=['%Y-%m-%d'], widget=forms.SelectDateWidget, help_text='Start Date')
+    end_date = forms.DateField(required=True, input_formats=['%Y-%m-%d'], widget=forms.SelectDateWidget, help_text='End Date')
+    interval = forms.ChoiceField(help_text='Time Interval',choices=[('daily', 'daily'),
+                                          ('weekly', 'weekly'),
+                                          ('weekly', 'monthly')] )
 
-    class Meta:
-        model = Category
-        fields = ('name','url')
+    def clean(self):
+        data = self.cleaned_data
+        if data['start_date'] > data['end_date']:
+            raise ValidationError('Start date should be before end date')
+        if data['start_date'] == data['end_date']:
+            raise ValidationError('Please select a range of more than one day')
+        return data

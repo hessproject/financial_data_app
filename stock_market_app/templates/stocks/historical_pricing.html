@@ -1,0 +1,26 @@
+{% extends 'stocks/base.html' %}
+{% load staticfiles %}
+
+{% block body_block %}
+<div>
+    <h1>Get Historical Pricing</h1>
+    <form id="historical_pricing_form" method="post" action="{% url 'historical_pricing' %}">
+
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+            {{ field.errors }}
+            {{ field.help_text }}
+            {{ field }}<br>
+        {% endfor %}
+        <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+{% if graph %}
+    <div class="col-md-12">{{graph|safe}}</div>
+{% endif %}
+{% if err_message %}
+    <strong>{{ err_message }}</strong>
+{% endif %}
+
+{% endblock %}

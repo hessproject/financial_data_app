@@ -16,5 +16,9 @@ urlpatterns = [
 
     url(r'^stocks/add_category/$',
         views.add_category,
-        name='add_category')
+        name='add_category'),
+
+    url(r'^stocks/historical_pricing/$',
+        views.historical_pricing,
+        name='historical_pricing'),
 ]
