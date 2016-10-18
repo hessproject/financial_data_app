@@ -72,15 +72,16 @@ def get_historical_pricing(symbol, start_date, end_date, interval='daily'):
         return r.json()
 
     except json.decoder.JSONDecodeError as e:
-        print("Error decoding JSON")
-        print("Error message: " + e)
+        print(e)
+        raise
 
     except TypeError as e:
-        print("Error converting data")
-        print("Error message: " + e)
+        print(e)
+        raise
 
-    except Exception as error:
-        print("Unexpected error: " + error)
+    except Exception as e:
+        print(e)
+        raise
 
 
 def get_current_quote(symbols):
@@ -98,64 +99,3 @@ def get_current_quote(symbols):
 
     except:
         print('Error fetching current quote data')
-
-
-
-# Watchlist functions
-def create_watchlist(name, symbols):
-
-    url = endpoint + 'watchlists/'
-
-    payload = {
-        'name': name,
-        'symbols': symbols
-    }
-
-    try:
-        r = requests.post(url, params=payload, headers=default_headers)
-
-        return r.json()
-
-    except:
-        print('Error creating watchlist')
-
-
-def delete_watchlist(id):
-    if id == 'default':
-        return "Can't delete default watchlist"
-
-    url = endpoint + 'watchlists/' + id
-
-    try:
-        r = requests.delete(url, headers=default_headers)
-
-        return r.json()
-
-    except:
-        print('Error deleting watchlist')
-
-
-def get_all_watchlists():
-
-    url = endpoint + 'watchlists/'
-
-    try:
-        r = requests.get(url, headers=default_headers)
-
-        return r.json()
-
-    except:
-        print('Error getting watchlists')
-
-
-def get_one_watchlist(id):
-
-    url = endpoint + 'watchlists/' + id
-
-    try:
-        r = requests.get(url, headers=default_headers)
-
-        return r.json()
-
-    except:
-        print('Error getting watchlist')

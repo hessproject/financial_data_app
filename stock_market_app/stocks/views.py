@@ -17,90 +17,119 @@ def index(request):
     return response
 
 
-def show_stock(request):
+def get_company_info(request):
 
     context_dict = {}
 
-    response = render(request, 'stocks/stock.html', context=context_dict)
+    response = render(request, 'stocks/company.html', context=context_dict)
     return response
 
 
-@staff_member_required
-def add_category(request):
+def validate_data(day):
+    '''
+    :param day: A "day" object containing stock information (open, volume, high, low, close, and date)
+    :return: True if data is valid
+    '''
+    if day['low'] > day['high']:
+        print("low is greater than high")
+        return False
 
-    form = CategoryForm()
-    if request.method == 'POST':
-        form = CategoryForm(request.POST)
+    if day['open'] > day['high']:
+        print("open is greater than high")
+        return False
 
-        if form.is_valid():
-            form.save(commit=True)
-            return index(request)
-        else:
-            print(form.errors)
+    if day['close'] > day['high']:
+        print('close is greater than high')
+        return False
 
-    context_dict = {'form': form, }
+    if day['open'] < day['low']:
+        print('open is less than low')
+        return False
 
-    return render(request, 'stocks/add_category.html', context_dict)
+    if day['close'] < day['low']:
+        print('close is less than low')
+        return False
 
-
-def stocks(request):
-
-    context_dict = {}
-    return render(request, 'stocks/stocks.html', context=context_dict)
-
-
-def profile(request):
-
-    context_dict = {}
-    return render(request, 'stocks/profile.html', context=context_dict)
+    return True
 
 
 def historical_pricing(request):
+
     context_dict = {}
-    context_dict['data'] = None
-    context_dict['graph'] = None
     context_dict['form'] = HistoricalPricingForm()
-    data = None
-    graph = None
 
     if request.method == 'POST':
         form = HistoricalPricingForm(request.POST)
+
+        #Check form, gather information for API call
         if form.is_valid():
             symbol = form.cleaned_data['stock_symbol']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
             interval = form.cleaned_data['interval']
+            #print("{0},{1},{2},{3}".format(symbol,start_date,end_date,interval))
 
-        try:
-            data = get_historical_pricing(symbol, start_date, end_date, interval)
-            context_dict['data'] = data
-            print(data)
-        except Exception as e:
-            print("Error: " + e)
-            context_dict['err_message'] = "No data for this symbol or error connecting to Tradier API"
+
+            try:
+                #Make sure there isn't any previous data
+                data = None
+                graph = None
+                context_dict['graph'] = None
+                context_dict['data'] = None
+
+                #API Call
+                data = get_historical_pricing(symbol, start_date, end_date, interval)
+
+                #print(data)
+
+            except Exception as e:
+                context_dict['err_message'] = e
+                pass
+
+            if data:
+                if data['history'] != None:
+
+                    #Gather all data in a list of objects containing stock information for a particular day.
+                    symbol_data = []
+                    for day in data['history']['day']:
+                        if validate_data(day):
+                            day_data = {'date': day['date'],
+                                        'open': day['open'],
+                                        'high': day['high'],
+                                        'low': day['low'],
+                                        'close': day['close'],}
+
+                            symbol_data.append(day_data)
+
+                        #For debugging
+                        else:
+                            print(day)
+
+                    #Create candlestick chart using the data from symbol_data list created above
+                    fig = FF.create_candlestick([day['open'] for day in symbol_data],
+                                                [day['high'] for day in symbol_data],
+                                                [day['low'] for day in symbol_data],
+                                                [day['close'] for day in symbol_data],
+                                                dates=[day['date'] for day in symbol_data])
+                    fig['layout'].update({
+                        'title': '{0} Historical Data'.format(symbol),
+                        'yaxis': {'title': "Price in USD($)"},
+                        'xaxis': {'title': "Date"},
+                    })
+
+                    #Graphically represent the data, send it to the page.
+                    graph = opy.plot(fig, output_type='div', validate=False)
+                    if graph:
+                        context_dict['graph'] = graph
+
+                    context_dict['form'] = form
+
+                else:
+                    context_dict['graph'] = None
+                    context_dict['err_message'] = "History not available for this symbol"
 
     else:
         form = HistoricalPricingForm()
 
-    if data:
-        dates = []
-        highs = []
-        lows = []
-        opens = []
-        closes = []
-        for day in data['history']['day']:
-            dates.append(day['date'])
-            opens.append(day['open'])
-            highs.append(day['high'])
-            lows.append(day['low'])
-            closes.append(day['close'])
-
-        fig = FF.create_candlestick(opens, highs, lows, closes, dates=dates)
-
-        graph = opy.plot(fig, output_type='div', validate=False)
-        if graph:
-            context_dict['graph'] = graph
-
-        context_dict['form'] = form
 
     return render(request, 'stocks/historical_pricing.html', context=context_dict)
